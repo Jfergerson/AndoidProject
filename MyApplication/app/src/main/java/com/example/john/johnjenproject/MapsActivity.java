@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -273,8 +274,39 @@ public class MapsActivity extends FragmentActivity implements
             TextView name = (TextView) vg.findViewById(R.id.name);
 
             try {
+
                 name.setText(curTruck.getString("name"));
-                text.setText(curTruck.getString("hours"));
+                String hours = curTruck.getString("hours");
+                final String[] words = hours.split(" ");
+                final StringBuilder formatHours = new StringBuilder();
+                Log.d("words length: ",Integer.toString(words.length));
+                if(words.length < 10) {
+                    for (int i = 0; i < words.length; i++) {
+                        if ((i > 0) && (0 == (i % 1))) {
+                            formatHours.append('\n');
+                        }
+
+                        formatHours.append(words[i]);
+
+                        if (i != (words.length - 1)) {
+                            formatHours.append(' ');
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < words.length; i++) {
+                        if ((i > 0) && (0 == (i % 5))) {
+                            formatHours.append('\n');
+                        }
+
+                        formatHours.append(words[i]);
+
+                        if (i != (words.length - 1)) {
+                            formatHours.append(' ');
+                        }
+                    }
+                }
+                text.setText(formatHours);
+                text.setTextColor(Color.BLACK);
                 ratingBar.setRating(curTruck.getInt("rating"));
 
                 if (curTruck.getInt("rating") > 2) {
