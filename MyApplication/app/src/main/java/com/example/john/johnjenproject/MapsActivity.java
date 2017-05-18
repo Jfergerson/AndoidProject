@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -22,6 +24,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +39,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.w3c.dom.Text;
+
+import java.net.URL;
+import java.util.Random;
 
 import static com.example.john.johnjenproject.R.id.map;
 
@@ -51,6 +58,8 @@ public class MapsActivity extends FragmentActivity implements
     private AlertDialog.Builder builder;
     private static final long MIN_TIME = 400;
     private static final float MIN_DISTANCE = 1000;
+    public static String review;
+    public static float rating;
 
 
     @Override
@@ -110,23 +119,40 @@ public class MapsActivity extends FragmentActivity implements
         try {
             if (mMap.isMyLocationEnabled()) {
                 location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                cur_loc = new LatLng(location.getLatitude(),location.getLongitude());
+                if(location != null) {
+                    cur_loc = new LatLng(location.getLatitude(), location.getLongitude());
+                }
             }
         }catch(SecurityException e){Log.d("sec except",e.toString());}
 
-        LatLng chico_A = new LatLng(39.521760, -122.214978);
-        LatLng chico_B = new LatLng(39.622680, -122.205595);
-        mMap.addMarker(new MarkerOptions().position(chico_A).title("Chico_A"));
-            mMap.addMarker(new MarkerOptions().position(cur_loc).title("Location"));
-        Marker marker = mMap.addMarker(new MarkerOptions().position(chico_B).title("Chico_B"));
+        LatLng truck_A = new LatLng(39.724315, -121.849576);
+        LatLng truck_B = new LatLng(39.730541, -121.858539);
+        LatLng truck_C = new LatLng(39.725461, -121.834747);
         float[] dbl = new float[3];
-        Location.distanceBetween(cur_loc.latitude,cur_loc.longitude,
-                chico_B.latitude,chico_B.longitude,
-                dbl);
+        Marker marker = mMap.addMarker(new MarkerOptions().position(truck_A).title("Truck A"));
+        if(cur_loc!= null){
+            Location.distanceBetween(truck_A.latitude,truck_A.longitude,cur_loc.latitude,cur_loc.longitude,dbl);
+            marker.setTag(dbl[0]);
+        }
+        marker = mMap.addMarker(new MarkerOptions().position(truck_C).title("Truck C"));
+        if(cur_loc!= null){
+            Location.distanceBetween(truck_B.latitude,truck_B.longitude,cur_loc.latitude,cur_loc.longitude,dbl);
+            marker.setTag(dbl[0]);
+        }
+        marker = mMap.addMarker(new MarkerOptions().position(truck_B).title("Truck B"));
+        if(cur_loc!= null){
+            Location.distanceBetween(truck_C.latitude,truck_C.longitude,cur_loc.latitude,cur_loc.longitude,dbl);
+            marker.setTag(dbl[0]);
+        }
+
+
         Log.d("returned from distbet",Float.toString(dbl[0]));
         Log.d("returned from dbl1",Float.toString(dbl[1]));
         Log.d("returned from dbl2",Float.toString(dbl[2]));
-        marker.setTag(dbl[0]);
+
+
+
+
 
 
 
@@ -186,8 +212,23 @@ public class MapsActivity extends FragmentActivity implements
         return new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                Toast.makeText(getApplicationContext(),"You are: " + marker.getTag() + " Meters from this truck", Toast.LENGTH_LONG).show();
+                if(marker.getTag() != null) {
+                    Toast.makeText(getApplicationContext(), "You are: " + (float) marker.getTag() / 1000 + " KM from this truck", Toast.LENGTH_LONG).show();
+                }
                 DialogFragment fire = new CustomDialogFragment();
+
+                //this is where you are setting up all the review text and
+                //rating score that is displayed in the little popup menu
+                //add any more images you want to use to the drawables folder manually
+                //there is not a way to add them through android studio so drag and drop images
+                //into the /res/drawable/ folder and use them that way
+ 
+
+                review = "hello there";
+                Random r = new Random();
+                rating = (r.nextInt(50)/10f);
+//              review = jsonArray.getjson(marker.getTag()).getString(marker.title())
+                //rating = jsonArray.getjson(marker.getTag()).getString(marker.title()).
 
 
                 fire.show(getSupportFragmentManager(),"missile");
@@ -201,12 +242,7 @@ public class MapsActivity extends FragmentActivity implements
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialogInterface, int id){
 
-                }
-            });
             // Inflate the layout to use as dialog or embedded fragment
 
             return inflater.inflate(R.layout.display_truck, container, false);
@@ -220,8 +256,39 @@ public class MapsActivity extends FragmentActivity implements
             // title by default, but your custom layout might not need it. So here you can
             // remove the dialog title, but you must call the superclass to get the Dialog.
             Dialog dialog = super.onCreateDialog(savedInstanceState);
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialogInterface, int id){
+                }
+            });
+            builder.setView(R.layout.display_truck);
+            LayoutInflater inflater = getActivity().getLayoutInflater();
+            ViewGroup vg = (ViewGroup)inflater.inflate(R.layout.display_truck, null);
+            ImageView image = (ImageView) vg.findViewById(R.id.truckimg);
+            TextView text = (TextView) vg.findViewById(R.id.textview);
+            RatingBar ratingBar = (RatingBar) vg.findViewById(R.id.ratingBar);
+
+            //set text and stuff above here where i set the reveiw and rating to
+            //random shit just parse out the relevent bits from the json and set them there
+            text.setText(review);
+            ratingBar.setRating(rating);
+
+            //this is where you can set the rating that you pass from the json
+            //into the program
+            if(rating > 2){
+                image.setImageResource(R.drawable.foodtruck);
+
+            } else {
+                image.setImageResource(R.drawable.coffeespider);
+            }
+
+
+
+            builder.setView(vg);
+
+
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            return dialog;
+            return builder.create();
         }
     }
 }
